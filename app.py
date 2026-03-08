@@ -4,9 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import plotly.express as px
-import seaborn as sns
-import matplotlib.pyplot as plt
- 
+import os
+
 app = Flask(__name__)
 
 # Cargar dataset
@@ -17,10 +16,10 @@ num_rows = df.shape[0]
 num_cols = df.shape[1]
 columns = df.columns.tolist()
 
-# valores nulos
+# Valores nulos
 missing = df.isnull().sum().to_dict()
 
-# estadísticas
+# Estadísticas
 stats = df.describe().to_html(classes="table table-striped")
 
 # Top países por ventas
@@ -28,7 +27,7 @@ sales_country = df.groupby("COUNTRY")["SALES"].sum().sort_values(ascending=False
 sales_country = sales_country.to_frame().to_html(classes="table table-striped")
 
 # Datos para clustering
-data = df[['SALES','QUANTITYORDERED','PRICEEACH']]
+data = df[['SALES', 'QUANTITYORDERED', 'PRICEEACH']]
 
 scaler = StandardScaler()
 scaled = scaler.fit_transform(data)
@@ -39,7 +38,7 @@ clusters = kmeans.fit_predict(scaled)
 pca = PCA(n_components=3)
 pca_data = pca.fit_transform(scaled)
 
-pca_df = pd.DataFrame(pca_data, columns=['pca1','pca2','pca3'])
+pca_df = pd.DataFrame(pca_data, columns=['pca1', 'pca2', 'pca3'])
 pca_df["cluster"] = clusters
 
 
@@ -69,7 +68,7 @@ def dashboard():
         title="Relación entre variables"
     )
 
-    # Correlación
+    # Matriz de correlación
     corr = df.corr(numeric_only=True)
 
     fig4 = px.imshow(
@@ -77,12 +76,12 @@ def dashboard():
         text_auto=".2f",
         color_continuous_scale="magma",
         title="Matriz de Correlación"
-)
+    )
 
     fig4.update_layout(
         width=900,
         height=700
-)
+    )
 
     return render_template(
         "dashboard.html",
@@ -100,4 +99,5 @@ def dashboard():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
